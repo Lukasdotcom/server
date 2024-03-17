@@ -108,7 +108,7 @@ class AjaxController extends Controller {
 		$currentUser = $this->userSession->getUser();
 
 		// Non-admins can only edit their own credentials
-		$allowedToEdit = ($currentUser->getUID() === $uid);
+		$allowedToEdit = $currentUser->getUID() === $uid || ($uid === '' && $this->groupManager->isAdmin($currentUser->getUID()));
 
 		if ($allowedToEdit) {
 			$this->globalAuth->saveAuth($uid, $user, $password);
