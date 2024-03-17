@@ -28,58 +28,28 @@ use OCA\Files_External\Service\BackendService;
 use OCA\Files_External\Service\UserGlobalStoragesService;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\Encryption\IManager;
-use OCP\IUserSession;
 use OCP\Settings\ISettings;
 
 class Personal implements ISettings {
 	use CommonSettingsTrait;
 
-	/** @var IManager */
-	private $encryptionManager;
-
-	/** @var UserGlobalStoragesService */
-	private $userGlobalStoragesService;
-
-	/** @var GlobalAuth	 */
-	private $globalAuth;
-
-	/** @var IUserSession */
-	private $userSession;
-
 	public function __construct(
-		IManager $encryptionManager,
-		UserGlobalStoragesService $userGlobalStoragesService,
-		BackendService $backendService,
-		GlobalAuth $globalAuth,
-		IUserSession $userSession
+		string $userId,
+		protected IManager $encryptionManager,
+		protected UserGlobalStoragesService $userGlobalStoragesService,
+		protected BackendService $backendService,
+		protected GlobalAuth $globalAuth,
 	) {
-		$this->encryptionManager = $encryptionManager;
-		$this->userGlobalStoragesService = $userGlobalStoragesService;
-		$this->backendService = $backendService;
-		$this->globalAuth = $globalAuth;
-		$this->userSession = $userSession;
+		$this->userId = $userId;
 	}
 
 	/**
 	 * @return TemplateResponse
 	 */
 	public function getForm() {
-		$uid = $this->userSession->getUser()->getUID();
-
-		$parameters = [
-			'encryptionEnabled' => $this->encryptionManager->isEnabled(),
-			'visibilityType' => BackendService::VISIBILITY_PERSONAL,
-			'storages' => $this->userGlobalStoragesService->getStorages(),
-			'backends' => $this->backendService->getAvailableBackends(),
-			'authMechanisms' => $this->backendService->getAuthMechanisms(),
-			'dependencies' => \OCA\Files_External\MountConfig::dependencyMessage($this->backendService->getBackends()),
-			'allowUserMounting' => $this->backendService->isUserMountingAllowed(),
-			'globalCredentials' => $this->globalAuth->getAuth($uid),
-			'globalCredentialsUid' => $uid,
-		];
+		$this->setInitialState(BackendService::VISIBILITY_PERSONAL);
 		$this->loadScriptsAndStyles();
-
-		return new TemplateResponse('files_external', 'settings', $parameters, '');
+		return new TemplateResponse('files_external', 'settings', renderAs: '');
 	}
 
 	/**
