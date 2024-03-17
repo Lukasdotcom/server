@@ -31,15 +31,13 @@ use OCP\Encryption\IManager;
 use OCP\Settings\ISettings;
 
 class Admin implements ISettings {
+	use CommonSettingsTrait;
 
 	/** @var IManager */
 	private $encryptionManager;
 
 	/** @var GlobalStoragesService */
 	private $globalStoragesService;
-
-	/** @var BackendService */
-	private $backendService;
 
 	/** @var GlobalAuth	 */
 	private $globalAuth;
@@ -72,6 +70,7 @@ class Admin implements ISettings {
 			'globalCredentialsUid' => '',
 		];
 
+		$this->loadScriptsAndStyles();
 		return new TemplateResponse('files_external', 'settings', $parameters, '');
 	}
 

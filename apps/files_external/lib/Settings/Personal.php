@@ -32,15 +32,13 @@ use OCP\IUserSession;
 use OCP\Settings\ISettings;
 
 class Personal implements ISettings {
+	use CommonSettingsTrait;
 
 	/** @var IManager */
 	private $encryptionManager;
 
 	/** @var UserGlobalStoragesService */
 	private $userGlobalStoragesService;
-
-	/** @var BackendService */
-	private $backendService;
 
 	/** @var GlobalAuth	 */
 	private $globalAuth;
@@ -79,6 +77,7 @@ class Personal implements ISettings {
 			'globalCredentials' => $this->globalAuth->getAuth($uid),
 			'globalCredentialsUid' => $uid,
 		];
+		$this->loadScriptsAndStyles();
 
 		return new TemplateResponse('files_external', 'settings', $parameters, '');
 	}
