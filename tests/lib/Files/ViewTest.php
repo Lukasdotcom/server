@@ -99,6 +99,12 @@ class ViewTest extends \Test\TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		\OC_Hook::clear();
+		/* Disable encryption, this is not what we want to test */
+		$encryptionManager = Server::get(\OCP\Encryption\IManager::class);
+		$encryptionModules = $encryptionManager->getEncryptionModules();
+		foreach (array_keys($encryptionModules) as $encryptionModuleId) {
+			$encryptionManager->unregisterEncryptionModule($encryptionModuleId);
+		}
 
 		\OC_User::clearBackends();
 		\OC_User::useBackend(new \Test\Util\User\Dummy());
