@@ -25,6 +25,7 @@ use OCP\Files\ForbiddenException;
 use OCP\Files\GenericFileException;
 use OCP\Files\Mount\IMountManager;
 use OCP\Files\Storage\IStorage;
+use OCP\Files\Storage\IStorageFactory;
 use OCP\IDBConnection;
 use OCP\Lock\ILockingProvider;
 use OCP\Lock\LockedException;
@@ -1937,6 +1938,8 @@ class ViewTest extends \Test\TestCase {
 
 		/* Pause trash to avoid the trashbin intercepting rmdir and unlink calls */
 		Server::get(ITrashManager::class)->pauseTrash();
+		/* Same thing with encryption wrapper */
+		Server::get(IStorageFactory::class)->removeStorageWrapper('oc_encryption');
 
 		Filesystem::mount($storage, [], $this->user . '/');
 
@@ -2087,6 +2090,8 @@ class ViewTest extends \Test\TestCase {
 
 		/* Pause trash to avoid the trashbin intercepting rmdir and unlink calls */
 		Server::get(ITrashManager::class)->pauseTrash();
+		/* Same thing with encryption wrapper */
+		Server::get(IStorageFactory::class)->removeStorageWrapper('oc_encryption');
 
 		Filesystem::mount($storage, [], $this->user . '/');
 
@@ -2228,6 +2233,9 @@ class ViewTest extends \Test\TestCase {
 		$sourcePath = 'original.txt';
 		$targetPath = 'target.txt';
 
+		/* Disable encryption wrapper to avoid it intercepting mocked call */
+		Server::get(IStorageFactory::class)->removeStorageWrapper('oc_encryption');
+
 		Filesystem::mount($storage, [], $this->user . '/');
 		$storage->mkdir('files');
 		$view->file_put_contents($sourcePath, 'meh');
@@ -2280,6 +2288,9 @@ class ViewTest extends \Test\TestCase {
 
 		$sourcePath = 'original.txt';
 		$targetPath = 'target.txt';
+
+		/* Disable encryption wrapper to avoid it intercepting mocked call */
+		Server::get(IStorageFactory::class)->removeStorageWrapper('oc_encryption');
 
 		Filesystem::mount($storage, [], $this->user . '/');
 		$storage->mkdir('files');
@@ -2416,6 +2427,9 @@ class ViewTest extends \Test\TestCase {
 
 		$sourcePath = 'original.txt';
 		$targetPath = 'substorage/target.txt';
+
+		/* Disable encryption wrapper to avoid it intercepting mocked call */
+		Server::get(IStorageFactory::class)->removeStorageWrapper('oc_encryption');
 
 		Filesystem::mount($storage, [], $this->user . '/');
 		Filesystem::mount($storage2, [], $this->user . '/files/substorage');
