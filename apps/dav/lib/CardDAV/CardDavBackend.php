@@ -873,8 +873,29 @@ class CardDavBackend implements BackendInterface, SyncSupport {
 				'modified' => [],
 				'deleted' => [],
 			];
-
-			if ($syncToken) {
+			if(str_starts_with($syncToken, "init_")) {
+				$syncValues = explode("_", $syncToken);
+				$lastID = $syncValues[1];
+				$initialSyncToken = $syncValues[2];
+				$qb = $this->db->getQueryBuilder();
+				$qb->select('id','uri')
+					->from('cards')
+					->where(
+						$qb->expr()->eq('addressbookid', $qb->createNamedParameter($addressBookId))
+					)->setMaxResults($limit);
+				$stmt = $qb->executeQuery();
+				$values = $stmt->fetchAll(\PDO::FETCH_KEY_PAIR); 
+				$lastID = array_key_last($values);
+				$result['syncToken'] = 'init_'.	$lastID.'_'.$initialSyncToken;
+				$result['added'] = array_values($values);
+				$stmt->closeCursor();
+				$result['result_truncated'] = true;
+				if (count($result['added']) < $limit ) {
+					$result['syncToken'] = $initialSyncToken;
+					$result['result_truncated'] = false;
+				}
+			}
+			else if ($syncToken) {
 				$qb = $this->db->getQueryBuilder();
 				$qb->select('uri', 'operation')
 					->from('addressbookchanges')
@@ -899,6 +920,8 @@ class CardDavBackend implements BackendInterface, SyncSupport {
 				// last change on a node is relevant.
 				while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 					$changes[$row['uri']] = $row['operation'];
+					// get the last synctoken, needed in case a limit was set 
+					$result['syncToken'] = $row['synctoken'];
 				}
 				$stmt->closeCursor();
 
@@ -917,14 +940,27 @@ class CardDavBackend implements BackendInterface, SyncSupport {
 				}
 			} else {
 				$qb = $this->db->getQueryBuilder();
-				$qb->select('uri')
+				$qb->select('id','uri')
 					->from('cards')
 					->where(
 						$qb->expr()->eq('addressbookid', $qb->createNamedParameter($addressBookId))
 					);
 				// No synctoken supplied, this is the initial sync.
-				$stmt = $qb->executeQuery();
-				$result['added'] = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+				if (is_int($limit) && $limit > 0) {
+					$qb->setMaxResults($limit);
+					$stmt = $qb->executeQuery();
+					$values = $stmt->fetchAll(\PDO::FETCH_KEY_PAIR); 
+					$lastID = array_key_last($values);
+					if(count(array_values($values)) === $limit ){
+						$result['syncToken'] = 'init_'.	$lastID.'_'.$currentToken;	
+						$result['result_truncated'] = true;
+					}			
+				}
+				else {
+					$stmt = $qb->executeQuery();
+				}
+				$result['added'] = array_values($values);
+				
 				$stmt->closeCursor();
 			}
 			return $result;

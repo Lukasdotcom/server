@@ -211,15 +211,8 @@ class SystemAddressbook extends AddressBook {
 			$obj['carddata'] = $carddata;
 		}
 		return new Card($this->carddavBackend, $this->addressBookInfo, $obj);
-	}
-
-	/**
-	 * @throws UnsupportedLimitOnInitialSyncException
-	 */
+	}	
 	public function getChanges($syncToken, $syncLevel, $limit = null) {
-		if (!$syncToken && $limit) {
-			throw new UnsupportedLimitOnInitialSyncException();
-		}
 
 		if (!$this->carddavBackend instanceof SyncSupport) {
 			return null;

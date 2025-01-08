@@ -234,9 +234,6 @@ class AddressBook extends \Sabre\CardDAV\AddressBook implements IShareable, IMov
 	}
 
 	public function getChanges($syncToken, $syncLevel, $limit = null) {
-		if (!$syncToken && $limit) {
-			throw new UnsupportedLimitOnInitialSyncException();
-		}
 
 		return parent::getChanges($syncToken, $syncLevel, $limit);
 	}
