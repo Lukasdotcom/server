@@ -21,6 +21,8 @@ use OCA\DAV\Events\CardMovedEvent;
 use OCA\DAV\Events\CardUpdatedEvent;
 use OCP\AppFramework\Db\TTransactional;
 use OCP\DB\Exception;
+use Psr\Log\LoggerInterface;
+use OCP\IConfig;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
@@ -59,6 +61,8 @@ class CardDavBackend implements BackendInterface, SyncSupport {
 		private IUserManager $userManager,
 		private IEventDispatcher $dispatcher,
 		private Sharing\Backend $sharingBackend,
+		private LoggerInterface $logger,
+		private IConfig $config,
 	) {
 	}
 
@@ -851,6 +855,10 @@ class CardDavBackend implements BackendInterface, SyncSupport {
 	 * @return array
 	 */
 	public function getChangesForAddressBook($addressBookId, $syncToken, $syncLevel, $limit = null) {
+		if($limit === null){
+			$limit = $this->config->getSystemValueInt('carddav_sync_request_limit',1); 
+
+		}
 		// Current synctoken
 		return $this->atomic(function () use ($addressBookId, $syncToken, $syncLevel, $limit) {
 			$qb = $this->db->getQueryBuilder();
@@ -873,6 +881,7 @@ class CardDavBackend implements BackendInterface, SyncSupport {
 				'modified' => [],
 				'deleted' => [],
 			];
+			$this->logger->error('getChangesForAddressBook', ['syncToken' => $syncToken, 'currentToken' => $currentToken, 'limit' => $limit]);
 			if(str_starts_with($syncToken, "init_")) {
 				$syncValues = explode("_", $syncToken);
 				$lastID = $syncValues[1];
@@ -949,8 +958,8 @@ class CardDavBackend implements BackendInterface, SyncSupport {
 				if (is_int($limit) && $limit > 0) {
 					$qb->setMaxResults($limit);
 					$stmt = $qb->executeQuery();
-					$values = $stmt->fetchAll(\PDO::FETCH_KEY_PAIR); 
-					$lastID = array_key_last($values);
+					$values = $stmt->fetchAll(\PDO::FETCH_ASSOC); 
+					$lastID = end($values)['id'];
 					if(count(array_values($values)) === $limit ){
 						$result['syncToken'] = 'init_'.	$lastID.'_'.$currentToken;	
 						$result['result_truncated'] = true;
@@ -958,8 +967,10 @@ class CardDavBackend implements BackendInterface, SyncSupport {
 				}
 				else {
 					$stmt = $qb->executeQuery();
+					$values = $stmt->fetchAll(\PDO::FETCH_ASSOC); 
+					$this->logger->error('getChangesForAddressBook', ['values' => $values]);
 				}
-				$result['added'] = array_values($values);
+				$result['added'] =array_column($values, 'uri');
 				
 				$stmt->closeCursor();
 			}

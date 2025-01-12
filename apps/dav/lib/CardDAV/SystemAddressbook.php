@@ -211,7 +211,7 @@ class SystemAddressbook extends AddressBook {
 			$obj['carddata'] = $carddata;
 		}
 		return new Card($this->carddavBackend, $this->addressBookInfo, $obj);
-	}	
+	}
 	public function getChanges($syncToken, $syncLevel, $limit = null) {
 
 		if (!$this->carddavBackend instanceof SyncSupport) {

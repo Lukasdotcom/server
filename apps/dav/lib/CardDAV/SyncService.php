@@ -63,6 +63,7 @@ class SyncService {
 			$this->logger->error('Client exception:', ['app' => 'dav', 'exception' => $ex]);
 			throw $ex;
 		}
+		$this->logger->error('sync response',[$response]);
 
 		// 3. apply changes
 		// TODO: use multi-get for download
@@ -168,7 +169,7 @@ class SyncService {
 			'auth' => [$userName, $sharedSecret],
 			'body' => $this->buildSyncCollectionRequestBody($syncToken),
 			'headers' => ['Content-Type' => 'application/xml'],
-			'timeout' => $this->config->getSystemValueInt('carddav_sync_request_timeout', IClient::DEFAULT_REQUEST_TIMEOUT),
+			'timeout' => $this->config->getSystemValueInt('carddav_sync_request_timeout', IClient::DEFAULT_REQUEST_TIMEOUT)
 		];
 
 		$response = $client->request(
@@ -200,23 +201,17 @@ class SyncService {
 	}
 
 	private function buildSyncCollectionRequestBody(?string $syncToken): string {
-
 		$dom = new \DOMDocument('1.0', 'UTF-8');
 		$dom->formatOutput = true;
 		$root = $dom->createElementNS('DAV:', 'd:sync-collection');
 		$sync = $dom->createElement('d:sync-token', $syncToken ?? '');
-		$limit = $dom->createElement('d:limit');
-		$nresuts = $dom->createElement('d:nresults',$this->config->getSystemValueInt('carddav_sync_request_limit',IClient::DEFAULT_ADDRESSBOOK_INITIAL_SYNC_LIMIT));
-		$limit->appendChild($nresuts);
 		$prop = $dom->createElement('d:prop');
 		$cont = $dom->createElement('d:getcontenttype');
 		$etag = $dom->createElement('d:getetag');
 
-
 		$prop->appendChild($cont);
 		$prop->appendChild($etag);
 		$root->appendChild($sync);
-		$root->appendChild($limit);
 		$root->appendChild($prop);
 		$dom->appendChild($root);
 		return $dom->saveXML();
