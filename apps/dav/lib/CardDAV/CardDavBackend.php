@@ -21,13 +21,13 @@ use OCA\DAV\Events\CardMovedEvent;
 use OCA\DAV\Events\CardUpdatedEvent;
 use OCP\AppFramework\Db\TTransactional;
 use OCP\DB\Exception;
-use Psr\Log\LoggerInterface;
-use OCP\IConfig;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\EventDispatcher\IEventDispatcher;
+use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IUserManager;
 use PDO;
+use Psr\Log\LoggerInterface;
 use Sabre\CardDAV\Backend\BackendInterface;
 use Sabre\CardDAV\Backend\SyncSupport;
 use Sabre\CardDAV\Plugin;
@@ -855,8 +855,8 @@ class CardDavBackend implements BackendInterface, SyncSupport {
 	 * @return array
 	 */
 	public function getChangesForAddressBook($addressBookId, $syncToken, $syncLevel, $limit = null) {
-		if($limit === null){
-			$limit = $this->config->getSystemValueInt('carddav_sync_request_limit',1); 
+		if ($limit === null) {
+			$limit = $this->config->getSystemValueInt('carddav_sync_request_limit', 1);
 
 		}
 		// Current synctoken
@@ -882,29 +882,31 @@ class CardDavBackend implements BackendInterface, SyncSupport {
 				'deleted' => [],
 			];
 			$this->logger->error('getChangesForAddressBook', ['syncToken' => $syncToken, 'currentToken' => $currentToken, 'limit' => $limit]);
-			if(str_starts_with($syncToken, "init_")) {
-				$syncValues = explode("_", $syncToken);
+			if (str_starts_with($syncToken, 'init_')) {
+				$syncValues = explode('_', $syncToken);
 				$lastID = $syncValues[1];
 				$initialSyncToken = $syncValues[2];
 				$qb = $this->db->getQueryBuilder();
-				$qb->select('id','uri')
+				$qb->select('id', 'uri')
 					->from('cards')
 					->where(
-						$qb->expr()->eq('addressbookid', $qb->createNamedParameter($addressBookId))
-					)->setMaxResults($limit);
+						$qb->expr()->andX(
+							$qb->expr()->eq('addressbookid', $qb->createNamedParameter($addressBookId)),
+							$qb->expr()->gt('id', $qb->createNamedParameter($lastID)))
+					)->orderBy('id')
+					->setMaxResults($limit);
 				$stmt = $qb->executeQuery();
-				$values = $stmt->fetchAll(\PDO::FETCH_KEY_PAIR); 
-				$lastID = array_key_last($values);
-				$result['syncToken'] = 'init_'.	$lastID.'_'.$initialSyncToken;
-				$result['added'] = array_values($values);
+				$values = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+				$lastID = end($values)['id'];
+				$result['syncToken'] = 'init_' . $lastID . '_' . $initialSyncToken;
+				$result['added'] = array_column($values, 'uri');
 				$stmt->closeCursor();
 				$result['result_truncated'] = true;
-				if (count($result['added']) < $limit ) {
+				if (count($result['added']) < $limit) {
 					$result['syncToken'] = $initialSyncToken;
 					$result['result_truncated'] = false;
 				}
-			}
-			else if ($syncToken) {
+			} elseif ($syncToken) {
 				$qb = $this->db->getQueryBuilder();
 				$qb->select('uri', 'operation')
 					->from('addressbookchanges')
@@ -929,7 +931,7 @@ class CardDavBackend implements BackendInterface, SyncSupport {
 				// last change on a node is relevant.
 				while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 					$changes[$row['uri']] = $row['operation'];
-					// get the last synctoken, needed in case a limit was set 
+					// get the last synctoken, needed in case a limit was set
 					$result['syncToken'] = $row['synctoken'];
 				}
 				$stmt->closeCursor();
@@ -949,7 +951,7 @@ class CardDavBackend implements BackendInterface, SyncSupport {
 				}
 			} else {
 				$qb = $this->db->getQueryBuilder();
-				$qb->select('id','uri')
+				$qb->select('id', 'uri')
 					->from('cards')
 					->where(
 						$qb->expr()->eq('addressbookid', $qb->createNamedParameter($addressBookId))
@@ -958,19 +960,18 @@ class CardDavBackend implements BackendInterface, SyncSupport {
 				if (is_int($limit) && $limit > 0) {
 					$qb->setMaxResults($limit);
 					$stmt = $qb->executeQuery();
-					$values = $stmt->fetchAll(\PDO::FETCH_ASSOC); 
+					$values = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 					$lastID = end($values)['id'];
-					if(count(array_values($values)) === $limit ){
-						$result['syncToken'] = 'init_'.	$lastID.'_'.$currentToken;	
+					if (count(array_values($values)) === $limit) {
+						$result['syncToken'] = 'init_' . $lastID . '_' . $currentToken;
 						$result['result_truncated'] = true;
-					}			
-				}
-				else {
+					}
+				} else {
 					$stmt = $qb->executeQuery();
-					$values = $stmt->fetchAll(\PDO::FETCH_ASSOC); 
+					$values = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 					$this->logger->error('getChangesForAddressBook', ['values' => $values]);
 				}
-				$result['added'] =array_column($values, 'uri');
+				$result['added'] = array_column($values, 'uri');
 				
 				$stmt->closeCursor();
 			}

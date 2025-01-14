@@ -8,7 +8,6 @@
 namespace OCA\DAV\CardDAV;
 
 use OCA\DAV\DAV\Sharing\IShareable;
-use OCA\DAV\Exception\UnsupportedLimitOnInitialSyncException;
 use OCP\DB\Exception;
 use OCP\IL10N;
 use OCP\Server;

@@ -8,7 +8,6 @@ declare(strict_types=1);
  */
 namespace OCA\DAV\CardDAV;
 
-use OCA\DAV\Exception\UnsupportedLimitOnInitialSyncException;
 use OCA\Federation\TrustedServers;
 use OCP\Accounts\IAccountManager;
 use OCP\IConfig;
