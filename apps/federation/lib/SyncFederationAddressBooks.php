@@ -52,6 +52,7 @@ class SyncFederationAddressBooks {
 			try {
 				$newToken = $this->syncService->syncRemoteAddressBook($url, $cardDavUser, $addressBookUrl, $sharedSecret, $syncToken, $targetBookId, $targetPrincipal, $targetBookProperties);
 				if ($newToken !== $syncToken) {
+					// Finish truncated initial sync.
 					if (strpos($newToken, 'init') !== false) {
 						$newToken = $this->syncTruncatedAddressBook($url, $cardDavUser, $addressBookUrl, $sharedSecret, $newToken, $targetBookId, $targetPrincipal, $targetBookProperties);
 					}
@@ -82,7 +83,7 @@ class SyncFederationAddressBooks {
 
 	private function syncTruncatedAddressBook(string $url, string $cardDavUser, string $addressBookUrl, string $sharedSecret, string $syncToken, int $targetBookId, string $targetPrincipal, array $targetBookProperties): string {
 		$newToken = $this->syncService->syncRemoteAddressBook($url, $cardDavUser, $addressBookUrl, $sharedSecret, $syncToken, $targetBookId, $targetPrincipal, $targetBookProperties);
-		while(strpos($newToken, 'init') !== false) {
+		while (strpos($newToken, 'init') !== false) {
 			$newToken = $this->syncService->syncRemoteAddressBook($url, $cardDavUser, $addressBookUrl, $sharedSecret, $syncToken, $targetBookId, $targetPrincipal, $targetBookProperties);
 		}
 		return $newToken;
