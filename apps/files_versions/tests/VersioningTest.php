@@ -438,6 +438,8 @@ class VersioningTest extends \Test\TestCase {
 		$v2Renamed = $versionsFolder1 . '/folder1/test.txt.v' . $t2;
 		var_dump([
 			'success' => $success,
+			'source exists' => Filesystem::file_exists('/test.txt'),
+			'target exists' => Filesystem::file_exists('/folder1/test.txt'),
 			'v1 exists' => $this->rootView->file_exists($v1),
 			'v2 exists' => $this->rootView->file_exists($v2),
 			'v1Renamed exists' => $this->rootView->file_exists($v1Renamed),
