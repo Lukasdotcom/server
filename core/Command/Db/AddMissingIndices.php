@@ -16,6 +16,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use function array_filter;
 
 /**
  * Class AddMissingIndices
@@ -52,6 +53,22 @@ class AddMissingIndices extends Command {
 
 		if ($missingIndices !== [] || $toReplaceIndices !== []) {
 			$schema = new SchemaWrapper($this->connection);
+
+			foreach ($toReplaceIndices as $toReplaceIndex) {
+				if ($schema->hasTable($toReplaceIndex['tableName'])) {
+					$table = $schema->getTable($toReplaceIndex['tableName']);
+					// If none of the previous indices existed we have to add the index
+					if (array_filter($toReplaceIndex['oldIndexNames'], static fn (string $indexName) => $table->hasIndex($indexName)) === []) {
+						$missingIndices[] = [
+							'tableName' => $toReplaceIndex['tableName'],
+							'indexName' => $toReplaceIndex['newIndexName'],
+							'columns' => $toReplaceIndex['columns'],
+							'uniqueIndex' => $toReplaceIndex['uniqueIndex'],
+							'options' => $toReplaceIndex['options'],
+						];
+					}
+				}
+			}
 
 			foreach ($missingIndices as $missingIndex) {
 				if ($schema->hasTable($missingIndex['tableName'])) {
