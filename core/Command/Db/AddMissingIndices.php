@@ -48,6 +48,7 @@ class AddMissingIndices extends Command {
 		$event = new AddMissingIndicesEvent();
 		$this->dispatcher->dispatchTyped($event);
 
+		/** @var array<array-key, array{tableName: string, indexName: string, columns: string[], options: array{}, dropUnnamedIndex: bool, uniqueIndex: bool}> $missingIndices */
 		$missingIndices = $event->getMissingIndices();
 		$toReplaceIndices = $event->getIndicesToReplace();
 
@@ -63,8 +64,9 @@ class AddMissingIndices extends Command {
 							'tableName' => $toReplaceIndex['tableName'],
 							'indexName' => $toReplaceIndex['newIndexName'],
 							'columns' => $toReplaceIndex['columns'],
-							'uniqueIndex' => $toReplaceIndex['uniqueIndex'],
 							'options' => $toReplaceIndex['options'],
+							'dropUnnamedIndex' => false,
+							'uniqueIndex' => $toReplaceIndex['uniqueIndex'],
 						];
 					}
 				}
