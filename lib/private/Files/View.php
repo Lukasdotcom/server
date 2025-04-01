@@ -270,9 +270,7 @@ class View {
 	}
 
 	protected function renameUpdate(Storage $sourceStorage, Storage $targetStorage, string $sourceInternalPath, string $targetInternalPath): void {
-		echo "[DEBUG] renameUpdate($sourceInternalPath, $targetInternalPath) " . __FILE__ . ':' . __LINE__ . "\n";
 		if ($this->updaterEnabled) {
-			echo "[DEBUG] renameUpdate($sourceInternalPath, $targetInternalPath)! " . __FILE__ . ':' . __LINE__ . "\n";
 			$targetStorage->getUpdater()->renameFromStorage($sourceStorage, $sourceInternalPath, $targetInternalPath);
 		}
 	}
