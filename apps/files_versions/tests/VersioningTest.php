@@ -430,20 +430,7 @@ class VersioningTest extends \Test\TestCase {
 		// move file into the shared folder as recipient
 		$success = Filesystem::rename('/test.txt', '/folder1/test.txt');
 
-		// TODO: Voir is $v2 existe pour voir si c’est la copie ou la suppression qui foire
-		// Mettre du debug dans Wrapper/Encrytion::copyBetweenStorage c’est le suspect n-1
-		$versionsFolder1 = '/' . self::TEST_VERSIONS_USER . '/files_versions';
-
-		$v1Renamed = $versionsFolder1 . '/folder1/test.txt.v' . $t1;
-		$v2Renamed = $versionsFolder1 . '/folder1/test.txt.v' . $t2;
-		var_dump([
-			'success' => $success,
-			'v1 exists' => $this->rootView->file_exists($v1),
-			'v2 exists' => $this->rootView->file_exists($v2),
-			'v1Renamed exists' => $this->rootView->file_exists($v1Renamed),
-			'v2Renamed exists' => $this->rootView->file_exists($v2Renamed),
-		]);
-		$this->assertTrue($success); // renvoi true :-O
+		$this->assertTrue($success);
 		$this->assertFalse($this->rootView->file_exists($v1));
 		$this->assertFalse($this->rootView->file_exists($v2));
 
